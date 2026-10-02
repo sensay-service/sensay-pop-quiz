@@ -14,7 +14,51 @@ const $=id=>document.getElementById(id);
 const el=(tag,cls,text)=>{const node=document.createElement(tag);if(cls)node.className=cls;if(text!==undefined)node.textContent=text;return node};
 function render(){const t=texts[lang],li=lang==='zh'?0:1;document.documentElement.lang=lang==='zh'?'zh-Hant':'en';document.querySelectorAll('[data-lang]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.lang===lang)));$('heading').textContent=submitted?t.results:t.title;$('subtitle').textContent=submitted?t.review:t.intro;$('footer').textContent=lang==='zh'?'提交後，姓名／暱稱、分數與答案將提供給 Sensay。':'Your name/nickname, score and answers will be shared with Sensay.';$('name-label').textContent=lang==='zh'?'姓名／暱稱':'Name / nickname';$('privacy').textContent=lang==='zh'?'讓我們知道您是誰！請輸入姓名或暱稱 😊':'Let us know who’s joining! Enter your name or nickname 😊';$('participant').placeholder=lang==='zh'?'例如：王老師':'e.g. Teacher Wang';updateSendStatus();$('submit').textContent=t.submit;$('retry').textContent=t.retry;$('quiz').hidden=submitted;$('results').hidden=!submitted;$('retry').hidden=!submitted;$('score').hidden=!submitted;$('progress').hidden=submitted;$('error').hidden=true;$('questions').replaceChildren();$('results').replaceChildren();
 if(!submitted){questions.forEach((q,i)=>{const card=el('div','card'),field=el('fieldset'),legend=el('legend');legend.append(el('span','number',String(i+1)),document.createTextNode(q[lang]));field.append(legend);const options=el('div','options');q.options[li].forEach((label,j)=>{const option=el('label','option'),input=el('input');input.type='radio';input.name=`q${i}`;input.value=String(j);input.checked=answers[i]===j;input.required=true;input.addEventListener('change',()=>{answers[i]=j;$('error').hidden=true;updateProgress()});option.append(input,el('span','',label));options.append(option)});field.append(options);card.append(field);$('questions').append(card)});updateProgress();return}
-const n=questions.filter((q,i)=>answers[i]===q.answer).length;$('score').textContent=t.score(n);questions.forEach((q,i)=>{const ok=answers[i]===q.answer,card=el('article','card'),top=el('div','result-title'),title=el('h2');title.append(el('span','number',String(i+1)),document.createTextNode(q[lang]));top.append(title,el('span',`badge ${ok?'correct':'incorrect'}`,ok?t.correct:t.incorrect));card.append(top);if(!ok)card.append(el('p','answer wrong',t.your+q.options[li][answers[i]]));card.append(el('p','answer right',t.answer+q.options[li][q.answer]),el('p','explanation',ok?(i===0?(lang==='zh'?'老師可以建立七種口說練習。':'Teachers can create seven speaking exercise types.'):i===1?(lang==='zh'?'一般練習的錄音上限為 30 秒。':'Standard exercises allow recordings up to 30 seconds long.'):i===2?(lang==='zh'?'Sensay AI 以紅、黃、綠呈現發音回饋。':'Sensay AI uses red, yellow and green for pronunciation feedback.'):(lang==='zh'?'連續七天每天提交錄音，就會獲得彩虹！':'Submit a recording every day for seven consecutive days to earn a rainbow!')):q.explain[li]));if(!ok&&q.image){const figure=el('figure'),img=el('img');img.src=q.image;img.alt=q.alt[li];img.loading='lazy';figure.append(img,el('figcaption','',t.figure));card.append(figure)}$('results').append(card)})}
+const n=questions.filter((q,i)=>answers[i]===q.answer).length;$('score').textContent=t.score(n);questions.forEach((q,i)=>{const ok=answers[i]===q.answer,card=el('article','card'),top=el('div','result-title'),title=el('h2');title.append(el('span','number',String(i+1)),document.createTextNode(q[lang]));top.append(title,el('span',`badge ${ok?'correct':'incorrect'}`,ok?t.correct:t.incorrect));card.append(top);if(!ok)card.append(el('p','answer wrong',t.your+q.options[li][answers[i]]));card.append(el('p','answer right',t.answer+q.options[li][q.answer]),el('p','explanation',ok?(i===0?(lang==='zh'?'老師可以建立七種口說練習。':'Teachers can create seven speaking exercise types.'):i===1?(lang==='zh'?'一般練習的錄音上限為 30 秒。':'Standard exercises allow recordings up to 30 seconds long.'):i===2?(lang==='zh'?'Sensay AI 以紅、黃、綠呈現發音回饋。':'Sensay AI uses red, yellow and green for pronunciation feedback.'):(lang==='zh'?'連續七天每天提交錄音，就會獲得彩虹！':'Submit a recording every day for seven consecutive days to earn a rainbow!')):q.explain[li]));// 第 1 題答錯時顯示教學影片。
+if (!ok && i === 0) {
+  const tutorial = el("div", "tutorial");
+
+  tutorial.append(
+    el(
+      "p",
+      "explanation",
+      lang === "zh"
+        ? "🎬 還不熟悉這七種題型嗎？看看教學影片，了解每種題型如何設定與使用！"
+        : "🎬 Not sure how to use all seven exercise types? Watch our tutorials to learn how to set up and use each one!"
+    )
+  );
+
+  const videos = lang === "zh"
+    ? [
+        "https://www.youtube.com/watch?v=8oBPSdDXnJ4&t=3s",
+        "https://www.youtube.com/watch?v=dLileMbBvgo&t=358s"
+      ]
+    : [
+        "https://youtu.be/V9SyqEMUZC4",
+        "https://youtu.be/Ck29kcjsB_o"
+      ];
+
+  videos.forEach((url, videoIndex) => {
+    const link = el(
+      "a",
+      "",
+      lang === "zh"
+        ? `▶ 教學影片 ${videoIndex + 1}`
+        : `▶ Tutorial video ${videoIndex + 1}`
+    );
+
+    link.href = url;
+    link.target = "_blank";
+    link.rel = "noopener noreferrer";
+    link.style.cssText =
+      "display:inline-block;margin:0 16px 10px 0;" +
+      "color:var(--dark);font-weight:700;";
+
+    tutorial.append(link);
+  });
+
+  card.append(tutorial);
+}if(!ok&&q.image){const figure=el('figure'),img=el('img');img.src=q.image;img.alt=q.alt[li];img.loading='lazy';figure.append(img,el('figcaption','',t.figure));card.append(figure)}$('results').append(card)})}
 function updateProgress(){$('progress').textContent=texts[lang].count(answers.filter(a=>a!==null).length)}
 document.querySelectorAll('[data-lang]').forEach(button=>button.addEventListener('click',()=>{lang=button.dataset.lang;render()}));
 $('quiz').addEventListener('submit',event=>{event.preventDefault();const missing=answers.indexOf(null);if(missing!==-1){$('error').textContent=texts[lang].missing;$('error').hidden=false;document.querySelector(`input[name="q${missing}"]`).focus();return}participant=$('participant').value.trim();if(!participant){$('error').textContent=lang==='zh'?'請填寫姓名／暱稱。':'Please enter your name or nickname.';$('error').hidden=false;$('participant').focus();return}payload={name:participant,answers:answers.slice()};submitted=true;sendState='sending';render();$('heading').focus();window.scrollTo({top:0,behavior:'smooth'});sendSubmission()});
